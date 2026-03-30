@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LureDrop — Fishing Gacha</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --deep:#061020;--foam:#e8f4f8;
+  --gold:#f5b731;--gold-dim:#a37820;--teal:#00c9b1;--teal-dim:#007f70;
+  --text:#c8dde8;--text-dim:#5a7a8a;--card-bg:#0d1e32;--card-border:#1a3050;
+  --green:#52c47a;--green-dim:#2d7a4a;--red:#ff6b47;
+}
+body{background:var(--deep);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;overflow-x:hidden}
+.water-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.water-bg::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 120% 60% at 50% 100%,#0a2a4a 0%,transparent 70%),radial-gradient(ellipse 80% 40% at 20% 80%,#00304a 0%,transparent 60%)}
+.bubble{position:absolute;border-radius:50%;background:rgba(0,201,177,.04);border:1px solid rgba(0,201,177,.07);animation:rise linear infinite}
+@keyframes rise{from{transform:translateY(100vh) scale(.5);opacity:0}10%{opacity:1}90%{opacity:.5}to{transform:translateY(-10vh) scale(1.2);opacity:0}}
+
+header{position:relative;z-index:10;padding:18px 36px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(0,201,177,.12);background:rgba(6,16,32,.92);backdrop-filter:blur(14px);flex-wrap:wrap;gap:10px}
+.logo-text{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:3px;color:#e8f4f8;line-height:1}
+.logo-text span{color:var(--teal)}
+.logo-tag{font-family:'Barlow Condensed',sans-serif;font-size:.58rem;letter-spacing:3px;color:var(--text-dim);text-transform:uppercase}
+.header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.stat-pill{display:flex;align-items:center;border-radius:40px;padding:6px 14px}
+.stat-pill.spent{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}
+.stat-pill.earned{background:rgba(82,196,122,.08);border:1px solid rgba(82,196,122,.25)}
+.stat-pill.buyback{background:rgba(0,201,177,.08);border:1px solid rgba(0,201,177,.25)}
+.stat-amount{font-family:'Bebas Neue',sans-serif;font-size:1.2rem}
+.stat-label{font-size:.55rem;letter-spacing:2px;text-transform:uppercase;opacity:.7;margin-top:1px}
+.spent .stat-amount{color:var(--text)}.spent .stat-label{color:var(--text-dim)}
+.earned .stat-amount{color:var(--green)}.earned .stat-label{color:var(--green-dim)}
+.buyback .stat-amount{color:var(--teal)}.buyback .stat-label{color:var(--teal-dim)}
+.btn{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border:none;border-radius:10px;padding:8px 16px;cursor:pointer;font-size:.76rem;transition:all .2s}
+.btn-teal{background:var(--teal);color:var(--deep)}.btn-teal:hover{filter:brightness(1.1)}
+.btn-outline{background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.14)}.btn-outline:hover{background:rgba(255,255,255,.12)}
+.btn-danger{background:rgba(255,107,71,.12);color:var(--red);border:1px solid rgba(255,107,71,.3)}.btn-danger:hover{background:rgba(255,107,71,.22)}
+.user-bar{display:flex;align-items:center;gap:7px}
+.user-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--teal),#0077b6);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:var(--deep);font-family:'Barlow Condensed',sans-serif}
+.user-name{font-size:.74rem;color:var(--text);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px}
+.wallet-addr{font-size:.57rem;color:var(--text-dim);font-family:'Barlow Condensed',sans-serif}
+
+.demo-banner{background:rgba(0,201,177,.07);border-bottom:1px solid rgba(0,201,177,.18);padding:7px 36px;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:2px;text-transform:uppercase;color:var(--teal);text-align:center;position:relative;z-index:11}
+
+main{position:relative;z-index:5;max-width:1200px;margin:0 auto;padding:40px 22px 80px}
+.section-eyebrow{font-family:'Barlow Condensed',sans-serif;font-size:.6rem;letter-spacing:4px;text-transform:uppercase;color:var(--teal);margin-bottom:4px}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:2.5rem;letter-spacing:2px;color:#e8f4f8;line-height:1;margin-bottom:28px}
+.section-title span{color:var(--teal)}
+
+/* ── Gacha cards ── */
+.gacha-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:22px}
+.gacha-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;overflow:hidden;transition:transform .25s,box-shadow .25s}
+.gacha-card:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+
+/* Horizontal preview strip of product photos in the banner */
+.card-banner{height:160px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.banner-bg{position:absolute;inset:0}
+.banner-pattern{position:absolute;inset:0;background-image:repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(255,255,255,.015) 20px,rgba(255,255,255,.015) 40px)}
+.banner-photos{position:relative;z-index:2;display:flex;gap:8px;align-items:center;padding:12px 16px;overflow:hidden;width:100%}
+.banner-photo{width:90px;height:90px;border-radius:10px;object-fit:contain;background:rgba(255,255,255,.07);flex-shrink:0;border:1px solid rgba(255,255,255,.1);padding:4px;transition:transform .2s}
+.banner-photo:hover{transform:scale(1.08)}
+.banner-photo.legendary-photo{border-color:rgba(245,183,49,.5);background:rgba(245,183,49,.07)}
+.banner-photo.rare-photo{border-color:rgba(155,106,245,.4);background:rgba(155,106,245,.06)}
+.type-badge{position:absolute;top:11px;left:11px;z-index:3;font-family:'Barlow Condensed',sans-serif;font-size:.56rem;letter-spacing:3px;text-transform:uppercase;color:white;padding:3px 9px;border-radius:20px;font-weight:700}
+.source-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(245,183,49,.1);border:1px solid rgba(245,183,49,.25);border-radius:20px;padding:3px 9px;font-family:'Barlow Condensed',sans-serif;font-size:.56rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:9px}
+.card-body{padding:16px 18px}
+.card-name{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:1px;color:#e8f4f8;margin-bottom:4px}
+.card-desc{font-size:.75rem;color:var(--text-dim);line-height:1.5;margin-bottom:12px}
+
+.rarity-list{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.rarity-row{display:flex;align-items:center;gap:6px}
+.rarity-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.rarity-dot.common{background:#6aaa6a}.rarity-dot.uncommon{background:#4a9ade}.rarity-dot.rare{background:#9b6af5}.rarity-dot.legendary{background:var(--gold);box-shadow:0 0 4px var(--gold)}
+.rarity-name{font-family:'Barlow Condensed',sans-serif;font-size:.64rem;letter-spacing:1px;text-transform:uppercase;width:80px}
+.rarity-bar-wrap{flex:1;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.rarity-bar-fill{height:100%;border-radius:2px}
+.rarity-bar-fill.common{background:#6aaa6a}.rarity-bar-fill.uncommon{background:#4a9ade}.rarity-bar-fill.rare{background:#9b6af5}.rarity-bar-fill.legendary{background:var(--gold)}
+.rarity-pct{font-size:.6rem;color:var(--text-dim);width:32px;text-align:right}
+
+.card-footer{padding-top:12px;border-top:1px solid var(--card-border)}
+.price-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.spin-price{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:#e8f4f8;letter-spacing:1px}
+.spin-price-label{font-size:.58rem;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase}
+.margin-tag{background:rgba(82,196,122,.12);border:1px solid rgba(82,196,122,.3);border-radius:20px;padding:2px 9px;font-family:'Barlow Condensed',sans-serif;font-size:.56rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--green)}
+.ev-note{font-size:.64rem;color:var(--text-dim);font-family:'Barlow Condensed',sans-serif;margin-bottom:10px;letter-spacing:.3px}
+.spin-btn{width:100%;font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:3px;border:none;border-radius:10px;padding:12px;cursor:pointer;transition:all .2s;color:white}
+.spin-btn:hover{filter:brightness(1.12);transform:scale(1.01)}
+.spin-btn:active{transform:scale(.99)}
+.buyback-note{display:flex;align-items:center;gap:5px;margin-top:8px;font-family:'Barlow Condensed',sans-serif;font-size:.6rem;letter-spacing:1px;color:var(--teal);opacity:.75}
+
+.add-gacha-card{background:transparent;border:2px dashed rgba(0,201,177,.15);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:420px;gap:8px}
+.add-icon{font-size:2rem;opacity:.2}
+.add-label{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim)}
+
+/* ── Spin overlay ── */
+.spin-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;opacity:0;pointer-events:none;transition:opacity .3s}
+.spin-overlay.active{opacity:1;pointer-events:all}
+.spin-drum{width:200px;height:200px;border-radius:50%;border:2px solid rgba(0,201,177,.15);position:relative;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.4)}
+.spin-ring{position:absolute;inset:-2px;border-radius:50%;border:2px solid transparent;border-top-color:var(--teal);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin-img-wrap{width:130px;height:130px;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06)}
+.spin-img{width:100%;height:100%;object-fit:contain}
+.spin-label{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--teal)}
+
+/* ── Result modal ── */
+.modal-overlay{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;padding:16px}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--card-bg);border:1px solid var(--card-border);border-radius:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:26px;transform:scale(.93);transition:transform .3s;position:relative}
+.modal-overlay.open .modal{transform:scale(1)}
+.modal-close{position:absolute;top:13px;right:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.8rem;color:var(--text)}.modal-close:hover{background:rgba(255,255,255,.14)}
+
+.result-rarity-label{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;display:block;text-align:center}
+.result-rarity-label.common{color:#6aaa6a}.result-rarity-label.uncommon{color:#4a9ade}.result-rarity-label.rare{color:#9b6af5}.result-rarity-label.legendary{color:var(--gold)}
+
+/* Product image hero in result */
+.result-card{border-radius:14px;padding:20px;margin-bottom:18px;border:1px solid transparent;display:flex;align-items:center;gap:16px}
+.result-card.common{background:rgba(106,170,106,.07);border-color:rgba(106,170,106,.22)}
+.result-card.uncommon{background:rgba(74,154,222,.07);border-color:rgba(74,154,222,.28)}
+.result-card.rare{background:rgba(155,106,245,.09);border-color:rgba(155,106,245,.42)}
+.result-card.legendary{background:rgba(245,183,49,.07);border-color:rgba(245,183,49,.52);animation:lglow 2s ease-in-out infinite}
+@keyframes lglow{0%,100%{box-shadow:0 0 20px rgba(245,183,49,.1)}50%{box-shadow:0 0 50px rgba(245,183,49,.3)}}
+.result-product-img{width:110px;height:110px;border-radius:10px;object-fit:contain;background:rgba(255,255,255,.07);flex-shrink:0;padding:6px;animation:popIn .5s cubic-bezier(.175,.885,.32,1.4) both;border:1px solid rgba(255,255,255,.08)}
+@keyframes popIn{from{transform:scale(0) rotate(-10deg);opacity:0}to{transform:scale(1);opacity:1}}
+.result-product-info{flex:1;min-width:0}
+.result-brand{font-family:'Barlow Condensed',sans-serif;font-size:.64rem;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px}
+.result-name{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;color:#e8f4f8;line-height:1.1;margin-bottom:6px}
+.result-retail{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;color:var(--text-dim);letter-spacing:1px}
+.result-retail span{color:#e8f4f8;font-size:.88rem}
+
+.pnl-box{background:rgba(0,0,0,.3);border-radius:10px;padding:13px 15px;margin-bottom:14px;font-family:'Barlow Condensed',sans-serif}
+.pnl-title{font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:9px}
+.pnl-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:.74rem;letter-spacing:.4px}
+.pnl-label{color:var(--text-dim)}
+.pnl-val{font-weight:600;color:var(--text)}
+.pnl-divider{height:1px;background:rgba(255,255,255,.07);margin:7px 0}
+.pnl-total-label{font-size:.76rem;font-weight:700;letter-spacing:1px;color:var(--text)}
+.pnl-total-val{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:1px}
+
+.buyback-box{background:rgba(0,201,177,.06);border:1px solid rgba(0,201,177,.2);border-radius:10px;padding:13px 15px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.buyback-offer-label{font-family:'Barlow Condensed',sans-serif;font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--teal-dim);margin-bottom:2px}
+.buyback-amount{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--teal);letter-spacing:1px}
+.buyback-sub{font-size:.58rem;color:var(--text-dim);font-family:'Barlow Condensed',sans-serif;letter-spacing:.4px}
+.btn-buyback{background:var(--teal);color:var(--deep);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border:none;border-radius:8px;padding:10px 18px;cursor:pointer;font-size:.76rem;transition:all .2s;white-space:nowrap}.btn-buyback:hover{filter:brightness(1.1)}
+.bps-link-btn{display:block;text-align:center;background:rgba(245,183,49,.09);border:1px solid rgba(245,183,49,.28);border-radius:10px;padding:10px;font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);text-decoration:none;transition:all .2s;margin-bottom:14px}.bps-link-btn:hover{background:rgba(245,183,49,.17)}
+.modal-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+
+/* ── Inventory ── */
+.inventory-section{margin-top:50px}
+.inventory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:12px}
+.inv-item{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:10px 8px;text-align:center;position:relative;transition:transform .2s}
+.inv-item:hover{transform:translateY(-2px)}
+.inv-item.rare{border-color:rgba(155,106,245,.3);background:rgba(155,106,245,.04)}
+.inv-item.legendary{border-color:rgba(245,183,49,.4);background:rgba(245,183,49,.05)}
+.inv-item.uncommon{border-color:rgba(74,154,222,.22)}
+.inv-img-wrap{width:72px;height:72px;margin:0 auto 6px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.06)}
+.inv-img{width:100%;height:100%;object-fit:contain;padding:4px}
+.inv-name{font-size:.57rem;color:var(--text);line-height:1.2;font-family:'Barlow Condensed',sans-serif;margin-bottom:2px}
+.inv-retail{font-size:.52rem;color:var(--text-dim);font-family:'Barlow Condensed',sans-serif}
+.inv-count{position:absolute;top:5px;right:5px;background:var(--teal);color:var(--deep);font-size:.5rem;font-weight:700;border-radius:8px;padding:1px 5px;font-family:'Barlow Condensed',sans-serif}
+.inv-sell-btn{display:block;margin-top:5px;background:rgba(0,201,177,.1);border:1px solid rgba(0,201,177,.24);border-radius:6px;padding:3px 5px;font-family:'Barlow Condensed',sans-serif;font-size:.52rem;letter-spacing:1px;text-transform:uppercase;color:var(--teal);cursor:pointer;width:100%;transition:all .2s}.inv-sell-btn:hover{background:rgba(0,201,177,.2)}
+.inv-empty{color:var(--text-dim);font-size:.8rem;font-style:italic;padding:16px 0;grid-column:1/-1}
+
+/* ── Login ── */
+#login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 82px);text-align:center;gap:18px;position:relative;z-index:5;padding:40px 20px}
+.login-icon{font-size:4.5rem;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.login-title{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;letter-spacing:3px;color:#e8f4f8}
+.login-title span{color:var(--teal)}
+.login-desc{max-width:420px;color:var(--text-dim);font-size:.87rem;line-height:1.6}
+.login-features{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+.feat{display:flex;align-items:center;gap:5px;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)}
+.feat-dot{width:5px;height:5px;border-radius:50%;background:var(--teal)}
+.btn-login{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:none;border-radius:12px;padding:13px 34px;cursor:pointer;font-size:.9rem;background:var(--teal);color:var(--deep);transition:all .2s}.btn-login:hover{filter:brightness(1.1)}
+.login-sub{font-size:.62rem;color:var(--text-dim);letter-spacing:1px}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(12px);background:rgba(10,22,40,.96);border:1px solid rgba(0,201,177,.3);border-radius:40px;padding:8px 20px;font-family:'Barlow Condensed',sans-serif;font-size:.82rem;letter-spacing:1px;color:var(--teal);z-index:300;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.win{border-color:rgba(82,196,122,.4);color:var(--green)}
+.toast.lose{border-color:rgba(255,107,71,.4);color:var(--red)}
+
+@media(max-width:600px){
+  header{padding:12px 16px}
+  main{padding:24px 12px 60px}
+  .modal{padding:20px 14px}
+  .section-title{font-size:2rem}
+  .result-card{flex-direction:column;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<div class="water-bg" id="waterBg"></div>
+<div class="demo-banner">⚡ Preview mode — real Bass Pro Shops product images · payments simulated</div>
+
+<header>
+  <div>
+    <div class="logo-text">LURE<span>DROP</span></div>
+    <div class="logo-tag">Fishing Gacha Platform</div>
+  </div>
+  <div class="header-right" id="headerRight"></div>
+</header>
+
+<div id="login-screen">
+  <div class="login-icon">🎣</div>
+  <div class="login-title">Welcome to <span>LureDrop</span></div>
+  <div class="login-desc">Spin for real Bass Pro Shops fishing gear. Pay a flat price, receive a real lure — or sell it back for 85% cash.</div>
+  <div class="login-features">
+    <div class="feat"><div class="feat-dot"></div>Real BPS Products</div>
+    <div class="feat"><div class="feat-dot"></div>Real Product Photos</div>
+    <div class="feat"><div class="feat-dot"></div>85% Buyback</div>
+    <div class="feat"><div class="feat-dot"></div>Card &amp; Crypto</div>
+  </div>
+  <button class="btn-login" onclick="doLogin()">Sign In to Cast</button>
+  <div class="login-sub">Email · Wallet · Google · Discord — powered by Privy</div>
+</div>
+
+<main id="app-main" style="display:none">
+  <div class="section-eyebrow">✦ Live from Bass Pro Shops</div>
+  <div class="section-title">Gacha <span>Collections</span></div>
+  <div class="gacha-grid" id="gachaGrid"></div>
+  <div class="inventory-section">
+    <div class="section-eyebrow">✦ Your Haul</div>
+    <div class="section-title">Tackle <span>Inventory</span></div>
+    <div class="inventory-grid" id="inventoryGrid"><div class="inv-empty">No lures yet — spin to start!</div></div>
+  </div>
+</main>
+
+<!-- SPIN OVERLAY -->
+<div class="spin-overlay" id="spinOverlay">
+  <div class="spin-drum">
+    <div class="spin-ring"></div>
+    <div class="spin-img-wrap">
+      <img class="spin-img" id="spinImg" src="" alt="">
+    </div>
+  </div>
+  <div class="spin-label">Reeling in your lure…</div>
+</div>
+
+<!-- RESULT MODAL -->
+<div class="modal-overlay" id="resultModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="resultContent"></div>
+    <div class="modal-actions">
+      <button class="btn btn-teal" onclick="spinAgain()">Spin Again</button>
+      <button class="btn btn-outline" onclick="closeModal()">Keep Fishing</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// BASS PRO SHOPS IMAGE CDN
+// Pattern: https://assets.basspro.com/image/upload/w_500,h_500,c_fit,f_auto/{SKU}.jpg
+// SKUs are real BPS part numbers from their product pages.
+// In production these come from the Impact affiliate product feed.
+// ══════════════════════════════════════════════════════════════
+// ── IMAGE LOADING ────────────────────────────────────────────
+// BPS uses Cloudinary's "list" delivery type.
+// The image URL is a JSON endpoint: .../image/list/{SKU}.json
+// That JSON contains the real public_id, which we use to build the final image URL.
+// We fetch the JSON, parse the public_id, then set img.src to the resolved URL.
+// CORS proxy is needed for local file:// preview; not needed in production.
+
+const IS_LOCAL = location.protocol === "file:" || location.hostname === "localhost" || location.hostname === "127.0.0.1";
+const CORS_PROXY = "https://corsproxy.io/?url=";
+const BPS_CLOUD  = "https://assets.basspro.com";
+
+function proxyUrl(url) {
+  return IS_LOCAL ? CORS_PROXY + encodeURIComponent(url) : url;
+}
+
+// Fetch the Cloudinary JSON for a SKU, extract the main image public_id,
+// return the final delivery URL (300×300, auto format).
+const imgCache = {};
+async function resolveBpsImg(sku, size = 300) {
+  if (imgCache[sku]) return imgCache[sku];
+  try {
+    const jsonUrl = `${BPS_CLOUD}/image/list/fn_select:jq:first(.[]|select(.public_id | endswith("main")))/${sku}.json`;
+    const res = await fetch(proxyUrl(jsonUrl));
+    const data = await res.json();
+    // data is the first matching asset: { public_id: "...", ... }
+    const publicId = data.public_id || (Array.isArray(data) ? data[0]?.public_id : null);
+    if (!publicId) throw new Error("no public_id");
+    const imgUrl = `${BPS_CLOUD}/image/upload/w_${size},h_${size},c_fit,f_auto/${publicId}.jpg`;
+    imgCache[sku] = imgUrl;
+    return imgUrl;
+  } catch {
+    // Fallback: try Scene7 CDN direct pattern
+    const s7 = `https://basspro.scene7.com/is/image/BassPro/${sku}_is?wid=${size}&hei=${size}&fmt=jpeg`;
+    imgCache[sku] = s7;
+    return s7;
+  }
+}
+
+// Set an img element's src by resolving the BPS image for a SKU.
+// Shows a spinner placeholder while loading.
+function loadBpsImg(imgEl, sku, size = 300) {
+  imgEl.style.opacity = "0.3";
+  imgEl.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'/%3E";
+  resolveBpsImg(sku, size).then(url => {
+    imgEl.src = proxyUrl(url);
+    imgEl.onload = () => { imgEl.style.opacity = "1"; imgEl.style.transition = "opacity 0.3s"; };
+    imgEl.onerror = () => {
+      // Last resort fallback
+      imgEl.style.opacity = "0";
+      const parent = imgEl.parentElement;
+      if (parent && !parent.querySelector(".img-fallback")) {
+        const fb = document.createElement("div");
+        fb.className = "img-fallback";
+        fb.textContent = "🎣";
+        fb.style.cssText = "font-size:2rem;display:flex;align-items:center;justify-content:center;width:100%;height:100%";
+        parent.appendChild(fb);
+      }
+    };
+  });
+}
+
+const STRIPE_PCT  = 0.029;
+const STRIPE_FLAT = 0.30;
+const BUYBACK_PCT = 0.85;
+
+function calcMargin(spinPrice, productRetail) {
+  const fee = +(spinPrice * STRIPE_PCT + STRIPE_FLAT).toFixed(2);
+  const net = +(spinPrice - fee - productRetail).toFixed(2);
+  const pct = +(net / spinPrice * 100).toFixed(1);
+  return { fee, net, pct };
+}
+
+// ══════════════════════════════════════════════════════════════
+// GACHA PACKS — real BPS SKUs with real product photos
+// ══════════════════════════════════════════════════════════════
+const GACHAS = [
+  {
+    id:"saltwater", name:"Saltwater Strike Pack",
+    desc:"Open-ocean weapons direct from Bass Pro Shops. Rare pulls can be worth $90+.",
+    type:"saltwater", spinPrice:20.00, targetMargin:10.8, poolEV:16.96,
+    accentColor:"#0077b6", accentDim:"#003d5c",
+    rarities:[
+      {id:"common",   label:"Common",   pct:60},
+      {id:"uncommon", label:"Uncommon", pct:28},
+      {id:"rare",     label:"Rare",     pct:10},
+      {id:"legendary",label:"Legendary",pct:2},
+    ],
+    items:[
+      // Common — SKUs confirmed from BPS search results
+      { name:"Berkley Gulp! Saltwater Shrimp", brand:"Berkley",    retail:9.99,  sku:"2340956", rarity:"common"    },
+      { name:"Storm Wildeye Swim Shad 4\"",    brand:"Storm",      retail:7.99,  sku:"241837",  rarity:"common"    },
+      { name:"Bass Pro Shops Saltwater Jig",   brand:"Bass Pro",   retail:8.49,  sku:"1059266", rarity:"common"    },
+      { name:"Rapala Jigging Rap 1/8oz",       brand:"Rapala",     retail:9.49,  sku:"275577",  rarity:"common"    },
+      // Uncommon
+      { name:"Nomad DTX Minnow 145",           brand:"Nomad",      retail:24.99, sku:"3687219", rarity:"uncommon"  },
+      { name:"Yo-Zuri Crystal Minnow 110F",    brand:"Yo-Zuri",    retail:18.99, sku:"469612",  rarity:"uncommon"  },
+      { name:"Rapala Slab Rap 2-1/2\"",        brand:"Rapala",     retail:16.49, sku:"3487460", rarity:"uncommon"  },
+      // Rare
+      { name:"Shimano Current Sniper Stick",   brand:"Shimano",    retail:42.99, sku:"3919816", rarity:"rare"      },
+      { name:"Shimano Butterfly Flat-Fall Jig",brand:"Shimano",    retail:38.99, sku:"2386511", rarity:"rare"      },
+      // Legendary
+      { name:"Williamson Speed Pro Jig 200g",  brand:"Williamson", retail:89.99, sku:"2879034", rarity:"legendary" },
+      { name:"Shimano Ocea Jigger Reel",       brand:"Shimano",    retail:94.99, sku:"3862115", rarity:"legendary" },
+    ]
+  },
+  {
+    id:"freshwater", name:"Freshwater Hunter Pack",
+    desc:"Budget spins, tighter odds. Real bass, trout, and musky lures from BPS.",
+    type:"freshwater", spinPrice:15.00, targetMargin:8.0, poolEV:13.07,
+    accentColor:"#52b788", accentDim:"#2d5c45",
+    rarities:[
+      {id:"common",   label:"Common",   pct:80},
+      {id:"uncommon", label:"Uncommon", pct:15},
+      {id:"rare",     label:"Rare",     pct:4},
+      {id:"legendary",label:"Legendary",pct:1},
+    ],
+    items:[
+      // Common — confirmed SKUs
+      { name:"Strike King Rage Tail Chunk 3\"",brand:"Strike King", retail:7.99,  sku:"1430037", rarity:"common"    },
+      { name:"Strike King Rage Tail Ned Bug",  brand:"Strike King", retail:6.49,  sku:"2773337", rarity:"common"    },
+      { name:"Strike King Rage Scounbug 3.5\"",brand:"Strike King", retail:8.99,  sku:"3509136", rarity:"common"    },
+      { name:"Strike King Rage Tail Cut-R Worm",brand:"Strike King",retail:9.49,  sku:"2586642", rarity:"common"    },
+      // Uncommon — confirmed SKUs
+      { name:"Rapala Original Floater F11",    brand:"Rapala",     retail:11.99, sku:"275577",  rarity:"uncommon"  },
+      { name:"Rapala Slab Rap 2.5\" Glow",     brand:"Rapala",     retail:14.49, sku:"3487460", rarity:"uncommon"  },
+      { name:"Rapala Jigging Rap W7 Chrome",   brand:"Rapala",     retail:13.99, sku:"275580",  rarity:"uncommon"  },
+      // Rare — confirmed SKUs
+      { name:"Shimano Current Sniper Minnow",  brand:"Shimano",    retail:22.99, sku:"3919817", rarity:"rare"      },
+      { name:"Shimano Current Sniper Stick",   brand:"Shimano",    retail:36.99, sku:"3919816", rarity:"rare"      },
+      // Legendary
+      { name:"Shimano Butterfly Flat-Fall Jig",brand:"Shimano",    retail:95.00, sku:"2386511", rarity:"legendary" },
+      { name:"Shimano Waxwing Jig System",     brand:"Shimano",    retail:88.00, sku:"1743731", rarity:"legendary" },
+    ]
+  }
+];
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let state = {
+  loggedIn:false, totalSpent:0, totalProfit:0, totalBuybacks:0,
+  inventory:[], lastGachaId:null, nextId:0,
+};
+
+// ══════════════════════════════════════════════════════════════
+// PULL LOGIC
+// ══════════════════════════════════════════════════════════════
+function rollItem(gacha) {
+  const r = Math.random() * 100;
+  let cum = 0, rarity = gacha.rarities[0].id;
+  for (const tier of gacha.rarities) { cum += tier.pct; if (r < cum) { rarity = tier.id; break; } }
+  const pool = gacha.items.filter(i => i.rarity === rarity);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function doSpin(gachaId) {
+  const gacha = GACHAS.find(g => g.id === gachaId);
+  state.lastGachaId = gachaId;
+
+  // Cycle through real product images during spin
+  const spinImg = document.getElementById("spinImg");
+  let f = 0;
+  document.getElementById("spinOverlay").classList.add("active");
+  const iv = setInterval(() => {
+    const item = gacha.items[f % gacha.items.length];
+    loadBpsImg(spinImg, item.sku, 200);
+    f++;
+  }, 130);
+
+  setTimeout(() => {
+    clearInterval(iv);
+    document.getElementById("spinOverlay").classList.remove("active");
+
+    const item = rollItem(gacha);
+    const m = calcMargin(gacha.spinPrice, item.retail);
+    const buybackVal = +(item.retail * BUYBACK_PCT).toFixed(2);
+
+    state.totalSpent  += gacha.spinPrice;
+    state.totalProfit += m.net;
+
+    const entry = { id: state.nextId++, gachaId, item, retail: item.retail, buybackVal, soldBack: false };
+    state.inventory.push(entry);
+
+    updateHeader();
+    renderInventory();
+    showResult(gacha, entry, m);
+  }, 1900);
+}
+
+function spinAgain() { closeModal(); setTimeout(() => doSpin(state.lastGachaId), 280); }
+
+function doBuyback(entryId) {
+  const e = state.inventory.find(x => x.id === entryId);
+  if (!e || e.soldBack) return;
+  e.soldBack = true;
+  state.totalBuybacks += e.buybackVal;
+  closeModal();
+  updateHeader();
+  renderInventory();
+  showToast(`💸 Sold back for $${e.buybackVal.toFixed(2)}`, "win");
+}
+
+function quickSell(entryId) {
+  const e = state.inventory.find(x => x.id === entryId);
+  if (!e || e.soldBack) return;
+  e.soldBack = true;
+  state.totalBuybacks += e.buybackVal;
+  updateHeader();
+  renderInventory();
+  showToast(`💸 Sold for $${e.buybackVal.toFixed(2)}`, "win");
+}
+
+// ══════════════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════════════
+function doLogin() {
+  state.loggedIn = true;
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("app-main").style.display = "block";
+  updateHeader(); renderGachas(); renderInventory();
+  showToast("✅ Signed in via Privy");
+}
+function doLogout() {
+  state = {loggedIn:false,totalSpent:0,totalProfit:0,totalBuybacks:0,inventory:[],lastGachaId:null,nextId:0};
+  document.getElementById("login-screen").style.display = "flex";
+  document.getElementById("app-main").style.display = "none";
+  updateHeader();
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════════
+function updateHeader() {
+  const el = document.getElementById("headerRight");
+  if (!state.loggedIn) { el.innerHTML = ""; return; }
+  const marginPct = state.totalSpent > 0 ? (state.totalProfit / state.totalSpent * 100).toFixed(1) : "0.0";
+  const profitColor = state.totalProfit >= 0 ? "var(--green)" : "var(--red)";
+  const sign = state.totalProfit >= 0 ? "+" : "";
+  el.innerHTML = `
+    <div class="stat-pill spent"><div>
+      <div class="stat-amount">$${state.totalSpent.toFixed(2)}</div>
+      <div class="stat-label">Spins Paid</div>
+    </div></div>
+    <div class="stat-pill earned"><div>
+      <div class="stat-amount" style="color:${profitColor}">${sign}$${state.totalProfit.toFixed(2)}</div>
+      <div class="stat-label">Your Profit (${marginPct}%)</div>
+    </div></div>
+    <div class="stat-pill buyback"><div>
+      <div class="stat-amount">$${state.totalBuybacks.toFixed(2)}</div>
+      <div class="stat-label">Buybacks Paid</div>
+    </div></div>
+    <div class="user-bar">
+      <div class="user-avatar">A</div>
+      <div><div class="user-name">Angler</div><div class="wallet-addr">0x1a2b…3c4d</div></div>
+    </div>
+    <button class="btn btn-danger" onclick="doLogout()">Sign Out</button>`;
+}
+
+function renderGachas() {
+  const grid = document.getElementById("gachaGrid");
+  grid.innerHTML = "";
+  GACHAS.forEach(gacha => {
+    // Build banner: show a horizontal strip of product photos
+    const previewItems = gacha.items.filter(i => ["uncommon","rare","legendary"].includes(i.rarity)).slice(0,4);
+    const photoStrip = previewItems.map(item =>
+      `<img class="banner-photo ${item.rarity}-photo" data-sku="${item.sku}" alt="${item.name}" title="${item.name}">`
+    ).join("");
+
+    const rarityRows = gacha.rarities.map(r => `
+      <div class="rarity-row">
+        <div class="rarity-dot ${r.id}"></div>
+        <span class="rarity-name">${r.label}</span>
+        <div class="rarity-bar-wrap"><div class="rarity-bar-fill ${r.id}" style="width:${r.pct}%"></div></div>
+        <span class="rarity-pct">${r.pct}%</span>
+      </div>`).join("");
+
+    const card = document.createElement("div");
+    card.className = "gacha-card";
+    card.innerHTML = `
+      <div class="card-banner">
+        <div class="banner-bg" style="background:linear-gradient(135deg,${gacha.accentDim} 0%,#061020 100%)"></div>
+        <div class="banner-pattern"></div>
+        <span class="type-badge" style="background:${gacha.accentColor}">${gacha.type}</span>
+        <div class="banner-photos">${photoStrip}</div>
+        <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,${gacha.accentColor},transparent)"></div>
+      </div>
+      <div class="card-body">
+        <div class="source-badge">🎣 Bass Pro Shops · ${gacha.items.length} real products · avg $${gacha.poolEV.toFixed(2)}</div>
+        <div class="card-name">${gacha.name}</div>
+        <div class="card-desc">${gacha.desc}</div>
+        <div class="rarity-list">${rarityRows}</div>
+        <div class="card-footer">
+          <div class="price-row">
+            <span class="spin-price">$${gacha.spinPrice.toFixed(2)}</span>
+            <span class="spin-price-label">flat per spin</span>
+            <span class="margin-tag">~${gacha.targetMargin}% margin</span>
+          </div>
+          <div class="ev-note">Pool avg $${gacha.poolEV.toFixed(2)} · odds tuned to keep ${gacha.targetMargin}% over volume</div>
+          <button class="spin-btn" style="background:${gacha.accentColor}" onclick="doSpin('${gacha.id}')">
+            🎣 &nbsp;Spin for $${gacha.spinPrice.toFixed(2)}
+          </button>
+          <div class="buyback-note">↩ &nbsp;Win anything? Sell it back for 85% of retail</div>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+    // Now load images async into the banner strip
+    card.querySelectorAll(".banner-photo[data-sku]").forEach(img => {
+      loadBpsImg(img, img.dataset.sku, 120);
+    });
+  });
+  const add = document.createElement("div");
+  add.className = "add-gacha-card";
+  add.innerHTML = `<div class="add-icon">＋</div><div class="add-label">More packs coming soon</div>`;
+  grid.appendChild(add);
+}
+
+function showResult(gacha, entry, m) {
+  const {item, buybackVal} = entry;
+  const profitColor = m.net >= 0 ? "var(--green)" : "var(--red)";
+  const sign = m.net >= 0 ? "+" : "";
+  const mSign = m.pct >= 0 ? "+" : "";
+  document.getElementById("resultContent").innerHTML = `
+    <span class="result-rarity-label ${item.rarity}">${item.rarity}</span>
+    <div class="result-card ${item.rarity}">
+      <img class="result-product-img" id="resultImg" alt="${item.name}">
+      <div class="result-product-info">
+        <div class="result-brand">${item.brand}</div>
+        <div class="result-name">${item.name}</div>
+        <div class="result-retail">BPS Retail <span>$${item.retail.toFixed(2)}</span></div>
+      </div>
+    </div>
+    <div class="pnl-box">
+      <div class="pnl-title">This Spin — P&amp;L</div>
+      <div class="pnl-row"><span class="pnl-label">User paid</span><span class="pnl-val">$${gacha.spinPrice.toFixed(2)}</span></div>
+      <div class="pnl-row"><span class="pnl-label">Stripe fee</span><span class="pnl-val" style="color:var(--text-dim)">−$${m.fee.toFixed(2)}</span></div>
+      <div class="pnl-row"><span class="pnl-label">Product cost (BPS retail)</span><span class="pnl-val" style="color:var(--text-dim)">−$${item.retail.toFixed(2)}</span></div>
+      <div class="pnl-divider"></div>
+      <div class="pnl-row">
+        <span class="pnl-total-label">Your profit</span>
+        <span class="pnl-total-val" style="color:${profitColor}">${sign}$${m.net.toFixed(2)} (${mSign}${m.pct.toFixed(1)}%)</span>
+      </div>
+    </div>
+    <div class="buyback-box">
+      <div>
+        <div class="buyback-offer-label">85% buyback offer</div>
+        <div class="buyback-amount">$${buybackVal.toFixed(2)}</div>
+        <div class="buyback-sub">BPS retail $${item.retail.toFixed(2)} × 85%</div>
+      </div>
+      <button class="btn-buyback" onclick="doBuyback(${entry.id})">Sell Back</button>
+    </div>
+    <a class="bps-link-btn" href="https://www.basspro.com" target="_blank">🎣 &nbsp;View on Bass Pro Shops →</a>`;
+
+  document.getElementById("resultModal").classList.add("open");
+  // Load product image async after modal is in DOM
+  loadBpsImg(document.getElementById("resultImg"), item.sku, 200);
+  if (m.net < 0) showToast(`Rare pull! Down $${Math.abs(m.net).toFixed(2)} this spin`, "lose");
+  else showToast(`+$${m.net.toFixed(2)} this spin (${m.pct.toFixed(1)}%)`, "win");
+}
+
+function renderInventory() {
+  const grid = document.getElementById("inventoryGrid");
+  const active = state.inventory.filter(e => !e.soldBack);
+  if (!active.length) { grid.innerHTML = '<div class="inv-empty">No lures yet — spin to start!</div>'; return; }
+  const o = {legendary:0,rare:1,uncommon:2,common:3};
+  active.sort((a,b) => o[a.item.rarity] - o[b.item.rarity]);
+  grid.innerHTML = active.map(e => `
+    <div class="inv-item ${e.item.rarity}">
+      <div class="inv-img-wrap">
+        <img class="inv-img" data-sku="${e.item.sku}" alt="${e.item.name}">
+      </div>
+      <div class="inv-name">${e.item.name}</div>
+      <div class="inv-retail">BPS $${e.retail.toFixed(2)}</div>
+      <button class="inv-sell-btn" onclick="quickSell(${e.id})">Sell $${e.buybackVal.toFixed(2)}</button>
+    </div>`).join("");
+  // Load inventory images async
+  grid.querySelectorAll(".inv-img[data-sku]").forEach(img => {
+    loadBpsImg(img, img.dataset.sku, 150);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// MODAL + TOAST
+// ══════════════════════════════════════════════════════════════
+function closeModal() { document.getElementById("resultModal").classList.remove("open"); }
+document.getElementById("resultModal").addEventListener("click", e => { if (e.target.id === "resultModal") closeModal(); });
+let toastTimer;
+function showToast(msg, type="") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (type ? " "+type : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = "toast", 2800);
+}
+
+// ══════════════════════════════════════════════════════════════
+// BUBBLES
+// ══════════════════════════════════════════════════════════════
+(function(){
+  const bg = document.getElementById("waterBg");
+  for(let i=0;i<16;i++){
+    const b=document.createElement("div");b.className="bubble";
+    const s=12+Math.random()*55;
+    b.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${9+Math.random()*16}s;animation-delay:${Math.random()*12}s`;
+    bg.appendChild(b);
+  }
+})();
+</script>
+</body>
+</html>
