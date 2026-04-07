@@ -188,11 +188,86 @@ main{position:relative;z-index:5;max-width:1200px;margin:0 auto;padding:40px 22p
   .section-title{font-size:2rem}
   .result-card{flex-direction:column;text-align:center}
 }
+
+/* ── Water BG ── */
+.water-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.water-bg::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 120% 60% at 50% 100%,#0a2a4a 0%,transparent 70%),radial-gradient(ellipse 80% 40% at 20% 80%,#00304a 0%,transparent 60%)}
+.water-bg::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 40% 20% at 30% 70%,rgba(0,201,177,.04) 0%,transparent 60%),radial-gradient(ellipse 30% 15% at 70% 60%,rgba(0,119,182,.05) 0%,transparent 50%);
+  animation:caustics 8s ease-in-out infinite alternate;}
+@keyframes caustics{0%{transform:translateX(0) scaleX(1)}100%{transform:translateX(20px) scaleX(1.05)}}
+.bubble{position:absolute;border-radius:50%;background:rgba(0,201,177,.04);border:1px solid rgba(0,201,177,.08);animation:rise linear infinite}
+@keyframes rise{from{transform:translateY(100vh) scale(.5) rotate(0deg);opacity:0}10%{opacity:1}90%{opacity:.5}to{transform:translateY(-10vh) scale(1.2) rotate(30deg);opacity:0}}
+.scanlines{position:fixed;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);}
+/* Shimmer on gacha card hover */
+.gacha-card::after{content:'';position:absolute;inset:0;z-index:10;pointer-events:none;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.06) 50%,transparent 60%);transform:translateX(-100%);transition:transform .6s ease;border-radius:16px;}
+.gacha-card:hover::after{transform:translateX(100%)}
+/* Login ripples */
+.login-ripple{position:absolute;width:200px;height:200px;border-radius:50%;border:1px solid rgba(0,201,177,.12);animation:rippleExpand 3s ease-out infinite;pointer-events:none;}
+.login-ripple:nth-child(2){animation-delay:1s}.login-ripple:nth-child(3){animation-delay:2s}
+@keyframes rippleExpand{0%{transform:scale(.8);opacity:.8}100%{transform:scale(2.5);opacity:0}}
+@keyframes fishFloat{0%,100%{transform:translateY(0) rotate(-3deg)}25%{transform:translateY(-10px) rotate(3deg)}50%{transform:translateY(-14px) rotate(-2deg)}75%{transform:translateY(-6px) rotate(2deg)}}
+.login-icon{font-size:5rem;animation:fishFloat 3s ease-in-out infinite;filter:drop-shadow(0 0 20px rgba(0,201,177,.3));}
+@keyframes titleReveal{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.login-title{font-family:'Bebas Neue',sans-serif;font-size:3.2rem;letter-spacing:4px;color:#e8f4f8;animation:titleReveal .7s cubic-bezier(.23,1,.32,1) .2s both;}
+.login-title span{color:var(--teal);text-shadow:0 0 30px rgba(0,201,177,.4);}
+.login-desc{max-width:420px;color:var(--text-dim);font-size:.87rem;line-height:1.6;animation:titleReveal .7s cubic-bezier(.23,1,.32,1) .35s both;}
+.login-features{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;animation:titleReveal .7s cubic-bezier(.23,1,.32,1) .5s both;}
+.feat{display:flex;align-items:center;gap:5px;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)}
+.feat-dot{width:5px;height:5px;border-radius:50%;background:var(--teal);box-shadow:0 0 6px var(--teal)}
+.btn-login{font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:none;border-radius:12px;padding:14px 40px;cursor:pointer;font-size:.95rem;background:linear-gradient(135deg,var(--teal),#0099a0);color:var(--deep);transition:all .25s;position:relative;overflow:hidden;animation:titleReveal .7s cubic-bezier(.23,1,.32,1) .65s both;}
+.btn-login:hover{filter:brightness(1.1);box-shadow:0 0 30px rgba(0,201,177,.4),0 8px 20px rgba(0,0,0,.3);}
+.btn-login:active{transform:scale(.97)}
+.login-sub{font-size:.62rem;color:var(--text-dim);letter-spacing:1px;animation:titleReveal .7s ease .8s both}
+/* Rarity bar animation */
+.rarity-bar-fill{height:100%;border-radius:2px;transform-origin:left;transform:scaleX(0);transition:transform .8s cubic-bezier(.23,1,.32,1)}
+.gacha-card.in-view .rarity-bar-fill{transform:scaleX(1)}
+/* Spin overlay - slot reel */
+.spin-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;opacity:0;pointer-events:none;transition:opacity .35s;backdrop-filter:blur(4px);}
+.spin-overlay.active{opacity:1;pointer-events:all}
+.reel-wrap{width:200px;height:200px;border-radius:18px;border:1px solid rgba(0,201,177,.18);background:rgba(0,0,0,.5);overflow:hidden;position:relative;}
+.reel-wrap::before,.reel-wrap::after{content:'';position:absolute;left:0;right:0;height:60px;z-index:3;pointer-events:none;}
+.reel-wrap::before{top:0;background:linear-gradient(to bottom,rgba(0,0,0,.9),transparent)}
+.reel-wrap::after{bottom:0;background:linear-gradient(to top,rgba(0,0,0,.9),transparent)}
+.reel-center-line{position:absolute;top:50%;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--teal),transparent);transform:translateY(-50%);z-index:4;pointer-events:none;box-shadow:0 0 12px rgba(0,201,177,.5);}
+.reel{display:flex;flex-direction:column;align-items:center;gap:0;position:relative;z-index:2;}
+.reel-item{width:200px;height:200px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:20px;}
+.reel-item img{width:140px;height:140px;object-fit:contain;border-radius:10px;background:rgba(255,255,255,.05);padding:8px;transition:opacity .15s;}
+.reel-ring{position:absolute;inset:-3px;border-radius:21px;border:2px solid transparent;border-top-color:var(--teal);border-right-color:rgba(0,201,177,.3);animation:reelSpin .6s linear infinite;pointer-events:none;z-index:5;box-shadow:0 0 20px rgba(0,201,177,.2);}
+@keyframes reelSpin{to{transform:rotate(360deg)}}
+.spin-label{font-family:'Barlow Condensed',sans-serif;font-size:.76rem;letter-spacing:4px;text-transform:uppercase;color:var(--teal);animation:labelFlicker 1.2s ease-in-out infinite;}
+@keyframes labelFlicker{0%,100%{opacity:.7}50%{opacity:1}}
+.spin-dots{display:flex;gap:8px}
+.spin-dot{width:6px;height:6px;border-radius:50%;background:rgba(0,201,177,.2);animation:dotBounce .8s ease-in-out infinite;}
+.spin-dot:nth-child(2){animation-delay:.15s}.spin-dot:nth-child(3){animation-delay:.3s}
+@keyframes dotBounce{0%,100%{background:rgba(0,201,177,.2);transform:scale(1)}50%{background:var(--teal);transform:scale(1.5)}}
+/* Modal spring */
+.modal{background:var(--card-bg);border:1px solid var(--card-border);border-radius:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:26px;position:relative;transform:scale(.9) translateY(20px);transition:transform .4s cubic-bezier(.175,.885,.32,1.275);}
+.modal-overlay.open .modal{transform:scale(1) translateY(0)}
+.modal-close{position:absolute;top:13px;right:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.8rem;color:var(--text);transition:all .2s;}
+.modal-close:hover{background:rgba(255,255,255,.14);transform:rotate(90deg)}
+@keyframes resultCardIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.result-card{border-radius:14px;padding:20px;margin-bottom:18px;border:1px solid transparent;display:flex;align-items:center;gap:16px;animation:resultCardIn .4s cubic-bezier(.175,.885,.32,1.275) both;}
+@keyframes popIn{from{transform:scale(0) rotate(-15deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+.result-product-img{width:110px;height:110px;border-radius:10px;object-fit:contain;background:rgba(255,255,255,.07);flex-shrink:0;padding:6px;animation:popIn .6s cubic-bezier(.175,.885,.32,1.4) both;border:1px solid rgba(255,255,255,.08);}
+@keyframes lglow{0%,100%{box-shadow:0 0 20px rgba(245,183,49,.1)}50%{box-shadow:0 0 60px rgba(245,183,49,.35),inset 0 0 30px rgba(245,183,49,.05)}}
+.result-card.legendary{background:rgba(245,183,49,.07);border-color:rgba(245,183,49,.52);animation:resultCardIn .4s cubic-bezier(.175,.885,.32,1.275) both,lglow 2s ease-in-out .5s infinite;}
+@keyframes legendaryLabel{0%,100%{text-shadow:0 0 8px rgba(245,183,49,.4)}50%{text-shadow:0 0 20px rgba(245,183,49,.8),0 0 40px rgba(245,183,49,.3)}}
+.result-rarity-label.legendary{color:var(--gold);font-size:.72rem;animation:legendaryLabel 1.5s ease-in-out infinite;}
+/* Particle canvas */
+#particleCanvas{position:fixed;inset:0;z-index:160;pointer-events:none;opacity:0;transition:opacity .2s;}
+#particleCanvas.active{opacity:1}
+@keyframes pulse-banner{0%,100%{opacity:.85}50%{opacity:1}}
+@keyframes dotPulse{0%,100%{box-shadow:0 0 4px var(--gold)}50%{box-shadow:0 0 10px var(--gold),0 0 20px rgba(245,183,49,.3)}}
+.rarity-dot.legendary{background:var(--gold);box-shadow:0 0 6px var(--gold);animation:dotPulse 2s ease-in-out infinite}
 </style>
 </head>
 <body>
 
 <div class="water-bg" id="waterBg"></div>
+<div class="scanlines"></div>
+<canvas id="particleCanvas"></canvas>
 <div class="demo-banner">⚡ Preview mode — real Bass Pro Shops product images · payments simulated</div>
 
 <header>
@@ -203,7 +278,10 @@ main{position:relative;z-index:5;max-width:1200px;margin:0 auto;padding:40px 22p
   <div class="header-right" id="headerRight"></div>
 </header>
 
-<div id="login-screen">
+<div id="login-screen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 82px);text-align:center;gap:22px;position:relative;z-index:5;padding:40px 20px;">
+  <div class="login-ripple"></div>
+  <div class="login-ripple"></div>
+  <div class="login-ripple"></div>
   <div class="login-icon">🎣</div>
   <div class="login-title">Welcome to <span>LureDrop</span></div>
   <div class="login-desc">Spin for real Bass Pro Shops fishing gear. Pay a flat price, receive a real lure — or sell it back for 85% cash.</div>
@@ -228,15 +306,21 @@ main{position:relative;z-index:5;max-width:1200px;margin:0 auto;padding:40px 22p
   </div>
 </main>
 
-<!-- SPIN OVERLAY -->
+<!-- SPIN OVERLAY — slot reel style -->
 <div class="spin-overlay" id="spinOverlay">
-  <div class="spin-drum">
-    <div class="spin-ring"></div>
-    <div class="spin-img-wrap">
-      <img class="spin-img" id="spinImg" src="" alt="">
+  <div style="position:relative">
+    <div class="reel-wrap" id="reelWrap">
+      <div class="reel-center-line"></div>
+      <div class="reel" id="reel"></div>
     </div>
+    <div class="reel-ring"></div>
   </div>
-  <div class="spin-label">Reeling in your lure…</div>
+  <div class="spin-label" id="spinLabel">Reeling in your lure…</div>
+  <div class="spin-dots">
+    <div class="spin-dot"></div>
+    <div class="spin-dot"></div>
+    <div class="spin-dot"></div>
+  </div>
 </div>
 
 <!-- RESULT MODAL -->
@@ -666,6 +750,25 @@ function showToast(msg, type="") {
     bg.appendChild(b);
   }
 })();
+
+// Slot Reel
+let reelInterval=null,reelItems=[],reelOffset=0;const ITEM_H=200;
+function buildReel(gacha){const reel=document.getElementById("reel");reel.innerHTML="";reelItems=[];const shuffled=[...gacha.items,...gacha.items,...gacha.items];shuffled.sort(()=>Math.random()-.5);reelItems=shuffled.slice(0,20);reelItems.forEach(item=>{const div=document.createElement("div");div.className="reel-item";const img=document.createElement("img");img.alt=item.name;loadBpsImg(img,item.sku,140);div.appendChild(img);reel.appendChild(div);});reelOffset=0;reel.style.transform="translateY(0)";}
+function doSpin(gachaId){const gacha=GACHAS.find(g=>g.id===gachaId);state.lastGachaId=gachaId;buildReel(gacha);document.getElementById("spinOverlay").classList.add("active");document.getElementById("spinLabel").textContent="Reeling in your lure…";let speed=8,totalFrames=0;const maxFrames=80;const reel=document.getElementById("reel");function step(){if(totalFrames<20)speed=Math.min(speed+1.5,28);else if(totalFrames>55)speed=Math.max(speed-1.2,3);reelOffset+=speed;const maxOffset=reelItems.length*ITEM_H-ITEM_H;if(reelOffset>=maxOffset-ITEM_H*2){reelOffset=ITEM_H*2;}reel.style.transform=`translateY(-${reelOffset}px)`;totalFrames++;if(totalFrames<maxFrames){reelInterval=requestAnimationFrame(step);}else{finishSpin(gacha);}}reelInterval=requestAnimationFrame(step);}
+function finishSpin(gacha){document.getElementById("spinLabel").textContent="✦ You caught something!";setTimeout(()=>{document.getElementById("spinOverlay").classList.remove("active");const item=rollItem(gacha);const m=calcMargin(gacha.spinPrice,item.retail);const buybackVal=+(item.retail*BUYBACK_PCT).toFixed(2);state.totalSpent+=gacha.spinPrice;state.totalProfit+=m.net;const entry={id:state.nextId++,gachaId:gacha.id,item,retail:item.retail,buybackVal,soldBack:false};state.inventory.push(entry);updateHeader();renderInventory();if(item.rarity==="legendary")shootParticles("gold");else if(item.rarity==="rare")shootParticles("purple");else if(item.rarity==="uncommon")shootParticles("blue");showResult(gacha,entry,m);},400);}
+function spinAgain(){closeModal();setTimeout(()=>doSpin(state.lastGachaId),280);}
+
+// Particles
+function shootParticles(colorScheme){const canvas=document.getElementById("particleCanvas");const ctx=canvas.getContext("2d");canvas.width=window.innerWidth;canvas.height=window.innerHeight;canvas.classList.add("active");const colors={gold:["#f5b731","#ffda6a","#ffd700","#fff4b0"],purple:["#9b6af5","#c4a8ff","#7b4ce0","#e0d0ff"],blue:["#4a9ade","#a0cfff","#2276c7","#d0eaff"]}[colorScheme]||["#00c9b1","#a0fff0","#007f70","#e0fff8"];const cx=canvas.width/2,cy=canvas.height/2;const particles=[];for(let i=0;i<80;i++){const angle=Math.random()*Math.PI*2;const speed=2+Math.random()*6;particles.push({x:cx,y:cy,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-4,size:3+Math.random()*5,color:colors[Math.floor(Math.random()*colors.length)],life:1,decay:.015+Math.random()*.02,gravity:.15,shape:Math.random()>.5?"circle":"star"});}function drawStar(ctx,x,y,r){ctx.beginPath();for(let i=0;i<5;i++){const a=i*Math.PI*2/5-Math.PI/2;const a2=a+Math.PI/5;ctx.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r);ctx.lineTo(x+Math.cos(a2)*r*.45,y+Math.sin(a2)*r*.45);}ctx.closePath();ctx.fill();}function frame(){ctx.clearRect(0,0,canvas.width,canvas.height);let alive=false;particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=p.gravity;p.vx*=.98;p.life-=p.decay;if(p.life<=0)return;alive=true;ctx.globalAlpha=p.life;ctx.fillStyle=p.color;if(p.shape==="star")drawStar(ctx,p.x,p.y,p.size);else{ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();}});ctx.globalAlpha=1;if(alive)requestAnimationFrame(frame);else{canvas.classList.remove("active");ctx.clearRect(0,0,canvas.width,canvas.height);}}requestAnimationFrame(frame);}
+
+// IntersectionObserver for rarity bars
+function observeRarityBars(){const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in-view");obs.unobserve(e.target);}});},{threshold:.3});document.querySelectorAll(".gacha-card").forEach(c=>obs.observe(c));}
+
+// Bubbles
+(function(){const bg=document.getElementById("waterBg")||document.createElement("div");if(!bg.id){bg.id="waterBg";bg.className="water-bg";document.body.prepend(bg);}for(let i=0;i<18;i++){const b=document.createElement("div");b.className="bubble";const s=8+Math.random()*50;b.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${10+Math.random()*18}s;animation-delay:${Math.random()*15}s`;bg.appendChild(b);}})();
+
+// Call observer after render
+const _origRenderGachas=renderGachas;renderGachas=function(){_origRenderGachas.apply(this,arguments);observeRarityBars();};
 </script>
 </body>
 </html>
